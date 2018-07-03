@@ -1,0 +1,67 @@
+version: "2"
+services:
+  db:
+    image: developmentseed/openroads-vn-db:latest
+    build: ./openroads-vn-api/db/
+    # container_name: vn-api-db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=openroads
+
+  api:
+    image: developmentseed/openroads-vn-api:latest
+    build: ./openroads-vn-api/
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=postgres://postgres@db:5432/openroads
+
+  vn-tiler:
+    image: developmentseed/openroads-vn-tiler:latest
+    env_file: .env
+    command: ./cron.sh
+    environment:
+      - S3_TEMPLATE=s3://openroads-vn-tiles/tiles/{z}/{x}/{y}.vector.pbf
+      - S3_DUMP_BUCKET=openroads-vn-dumps
+      - DATABASE_URL=postgres://postgres@db:5432/openroads
+
+  vn-analytics:
+    image: developmentseed/openroads-vn-analytics:latest
+    build: ./openroads-vn-analytics/
+    env_file: .env
+    ports:
+      - "8000:3000"
+      - "8001:3001"
+
+  id-editor:
+    image: developmentseed/openroads-vn-id-editor:latest
+    build: ./openroads-vn-id-editor/
+    env_file: .env
+    ports:
+      - "5000:5000"
+
+  tilemap:
+    image: developmentseed/openroads-tilemap:latest
+    env_file: .env
+    ports:
+      - "3000:3000"
+    environment:
+      - BUCKET_URL=http://openroads-vn-tiles.s3-website-us-east-1.amazonaws.com/tiles
+
+  nginx:
+    image: developmentseed/openroads-nginx:latest
+    build: ./nginx/
+    env_file: .env
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+      - id-editor
+      - vn-analytics
+      - tilemap
+
+

@@ -1,0 +1,3 @@
+[submodule "openroads-vn-api"]
+	path = openroads-vn-api
+	url = https://github.com/orma/openroads-vn-api.git
