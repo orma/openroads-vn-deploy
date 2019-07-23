@@ -1,4 +1,4 @@
-FROM node:6
+FROM node:8.16.0
 
 ENV workdir /var/www
 
